@@ -25,7 +25,7 @@ const particlesOptions = {
 const initialState = {
   input: '',
   imageUrl: '',
-  box: {},
+  faceBoxes: [],
   route: 'signin',
   isSignedIn: false,
   user: {
@@ -53,8 +53,19 @@ class App extends Component {
     }})
   }
 
-  calculateFaceLocation = (data) => {
-    const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
+  getFaceBoxes = (data) => {
+    let faces = [];
+    console.log(data.outputs[0].data.regions);
+    data.outputs[0].data.regions.forEach(element => {
+      const clarifaiFace = element.region_info.bounding_box;
+      const faceBox = this.calculateFaceLocation(clarifaiFace);
+      console.log('facebox: ', faceBox);
+      faces.push(faceBox);
+    });
+    return faces;
+  }
+
+  calculateFaceLocation = (clarifaiFace) => {
     const image = document.getElementById('inputimage');
     const width = Number(image.width);
     const height = Number(image.height);
@@ -66,8 +77,8 @@ class App extends Component {
     }
   }
 
-  displayFaceBox = (box) => {
-    this.setState({box: box});
+  displayFaceBox = (faceBoxes) => {
+    this.setState({faceBoxes: faceBoxes});
   }
 
   onInputChange = (event) => {
@@ -100,7 +111,7 @@ class App extends Component {
             .catch(console.log)
 
         }
-        this.displayFaceBox(this.calculateFaceLocation(response))
+        this.displayFaceBox(this.getFaceBoxes(response))
       })
       .catch(err => console.log(err));
   }
@@ -115,7 +126,7 @@ class App extends Component {
   }
 
   render() {
-    const { isSignedIn, imageUrl, route, box } = this.state;
+    const { isSignedIn, imageUrl, route, faceBoxes } = this.state;
     return (
       <div className="App">
          <Particles className='particles'
@@ -133,7 +144,7 @@ class App extends Component {
                 onInputChange={this.onInputChange}
                 onButtonSubmit={this.onButtonSubmit}
               />
-              <FaceRecognition box={box} imageUrl={imageUrl} />
+              <FaceRecognition boxes={faceBoxes} imageUrl={imageUrl} />
             </div>
           : (
              route === 'signin'
